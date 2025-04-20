@@ -23,6 +23,20 @@ function _getKrigingGridInfo(featureCollection,weight,krigingParams){
     return gridinfo;
 }
 
+function _getImageKrigingGridInfo(xlim,ylim,weight,krigingParams){
+    //先获取featureCollection的bbox
+    let values=[],lons=[],lats=[];
+    let extent=[xlim[0],ylim[0],xlim[1],ylim[1]];
+    featureCollection.features.forEach(feature => {
+        //提取插值权重字段，准备克里金插值使用
+        values.push(feature.properties[weight]);
+        lons.push(feature.geometry.coordinates[0]);
+        lats.push(feature.geometry.coordinates[1]);
+    });
+    let variogram=kriging.train(values,lons,lats,krigingParams.model,krigingParams.sigma2,krigingParams.alpha);
+    let gridinfo=kriging.getGridInfo(extent,variogram,200);
+    return gridinfo;
+}
   
 /*
 * 克里金生成矢量等值面，浏览器和node都可以使用
@@ -56,7 +70,7 @@ function getVectorContour(featureCollection,weight,krigingParams,breaks){
 * @param {array) colors：必填，等值面分级区间
 */
 function drawCanvasContour(featureCollection,weight,krigingParams,canvas,xlim,ylim,colors) {
-	let gridinfo=_getKrigingGridInfo(featureCollection,weight,krigingParams);
+    let gridinfo=_getImageKrigingGridInfo(xlim,ylim,weight,krigingParams);
     kriging.drawCanvasContour(gridinfo,canvas,xlim,ylim,colors);
 };
 
